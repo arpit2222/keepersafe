@@ -9,9 +9,11 @@ export default function Dashboard() {
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
   const [isAgentConnected, setIsAgentConnected] = useState(false);
 
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+
   const fetchLogs = async () => {
     try {
-      const res = await fetch("http://localhost:3001/api/warden/audit");
+      const res = await fetch(`${API_URL}/api/warden/audit`);
       const data = await res.json();
       setLogs(data.data || []);
     } catch (err) {
@@ -28,17 +30,17 @@ export default function Dashboard() {
   }, []);
 
   const handleApprove = async (id: string) => {
-    await fetch(`http://localhost:3001/api/warden/held/${id}/approve`, { method: "POST" });
+    await fetch(`${API_URL}/api/warden/held/${id}/approve`, { method: "POST" });
     fetchLogs();
   };
 
   const handleReject = async (id: string) => {
-    await fetch(`http://localhost:3001/api/warden/held/${id}/reject`, { method: "POST" });
+    await fetch(`${API_URL}/api/warden/held/${id}/reject`, { method: "POST" });
     fetchLogs();
   };
 
   const simulateRoutine = async () => {
-    await fetch("http://localhost:3001/api/warden/request", {
+    await fetch(`${API_URL}/api/warden/request`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -55,7 +57,7 @@ export default function Dashboard() {
   };
 
   const simulateAdversarial = async () => {
-    await fetch("http://localhost:3001/api/warden/request", {
+    await fetch(`${API_URL}/api/warden/request`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
