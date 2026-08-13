@@ -15,6 +15,15 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Health check route for Render/Deployment verification
+app.get('/', (req, res) => {
+  res.json({ 
+    status: "online", 
+    service: "Warden Guarded Execution Gateway API",
+    docs: "See README for API usage."
+  });
+});
+
 const keeperHub = new KeeperHubClient();
 
 // Default config for demo
