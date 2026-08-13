@@ -32,7 +32,7 @@ const policyEngine = new PolicyEngine(policyConfig);
 
 // Helper to get trailing average (mock logic for demo)
 async function getTrailingAverageUsd(): Promise<number> {
-  const recentLogs = await AuditLog.find({ status: "EXECUTED" }).sort({ timestamp: -1 }).limit(10);
+  const recentLogs = await (AuditLog as any).find({ status: "EXECUTED" }).sort({ timestamp: -1 }).limit(10);
   if (recentLogs.length === 0) return 100; // Mock base $100 if no history
   
   const sum = recentLogs.reduce((acc, log) => {
@@ -146,7 +146,7 @@ app.get('/api/warden/audit', async (req, res) => {
 
 app.post('/api/warden/held/:id/approve', async (req, res) => {
   try {
-    const log = await AuditLog.findById(req.params.id);
+    const log = await (AuditLog as any).findById(req.params.id);
     if (!log || log.status !== "HELD") {
       return res.status(404).json({ error: "Held log not found or already processed" });
     }
@@ -181,7 +181,7 @@ app.post('/api/warden/held/:id/approve', async (req, res) => {
 
 app.post('/api/warden/held/:id/reject', async (req, res) => {
   try {
-    const log = await AuditLog.findById(req.params.id);
+    const log = await (AuditLog as any).findById(req.params.id);
     if (!log || log.status !== "HELD") {
       return res.status(404).json({ error: "Held log not found or already processed" });
     }
