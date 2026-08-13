@@ -182,6 +182,19 @@ export default function Dashboard() {
                     <div className="text-sm text-neutral-400 bg-black/40 p-3 rounded-lg border border-white/5 font-mono overflow-hidden">
                       <span className="text-orange-400/80 font-semibold mr-2">Reason:</span> {log.reason}
                     </div>
+                    {log.txHash && (
+                      <div className="mt-3">
+                        <a 
+                          href={`https://sepolia.etherscan.io/tx/${log.txHash}`} 
+                          target="_blank" 
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-2 px-3 py-1.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 rounded-lg text-xs font-mono transition-colors border border-white/5"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                          {log.txHash.slice(0, 10)}...{log.txHash.slice(-8)}
+                        </a>
+                      </div>
+                    )}
                   </div>
                 ))}
                 
