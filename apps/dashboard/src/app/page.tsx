@@ -44,7 +44,7 @@ export default function Dashboard() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        action: { to_address: "0x000000000000000000000000000000000000dead", amount: "0.01" },
+        action: { to_address: "0x000000000000000000000000000000000000dead", amount: "0.0001" },
         requestedBy: "DashboardTrigger",
         statedIntent: "Routine Payment"
       })
@@ -61,7 +61,7 @@ export default function Dashboard() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        action: { to_address: "0x000000000000000000000000000000000000dead", amount: "10.0" },
+        action: { to_address: "0x1111111111111111111111111111111111111111", amount: "0.0005" },
         requestedBy: "DashboardTrigger",
         statedIntent: "URGENT OVERRIDE"
       })
