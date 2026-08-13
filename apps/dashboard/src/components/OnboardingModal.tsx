@@ -10,8 +10,11 @@ interface OnboardingModalProps {
 
 export default function OnboardingModal({ isOpen, onClose, isAgentConnected }: OnboardingModalProps) {
   const [activeTab, setActiveTab] = useState<"ts" | "python">("ts");
-  const [apiKey] = useState(`wdn_live_${Math.random().toString(36).substring(2, 15)}`);
-  
+  const [apiKey, setApiKey] = useState("wdn_live_generating...");
+
+  useEffect(() => {
+    setApiKey(`wdn_live_${Math.random().toString(36).substring(2, 15)}`);
+  }, []);
   if (!isOpen) return null;
 
   const tsCode = `import { WardenClient } from "@warden/sdk";
@@ -60,10 +63,10 @@ print(result.status) # "EXECUTED" | "HELD" | "REJECTED"`;
         </div>
 
         {/* Status Banner */}
-        <div className={\`p-4 text-sm font-medium flex items-center gap-3 transition-colors duration-500 \${isAgentConnected ? "bg-emerald-500/20 text-emerald-400" : "bg-amber-500/10 text-amber-400"}\`}>
+        <div className={`p-4 text-sm font-medium flex items-center gap-3 transition-colors duration-500 ${isAgentConnected ? "bg-emerald-500/20 text-emerald-400" : "bg-amber-500/10 text-amber-400"}`}>
           <div className="relative flex h-3 w-3">
             {!isAgentConnected && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>}
-            <span className={\`relative inline-flex rounded-full h-3 w-3 \${isAgentConnected ? "bg-emerald-500" : "bg-amber-500"}\`}></span>
+            <span className={`relative inline-flex rounded-full h-3 w-3 ${isAgentConnected ? "bg-emerald-500" : "bg-amber-500"}`}></span>
           </div>
           {isAgentConnected ? "Agent Connected Successfully! You can now close this window." : "Listening for first agent heartbeat..."}
         </div>
@@ -73,13 +76,13 @@ print(result.status) # "EXECUTED" | "HELD" | "REJECTED"`;
           <div className="flex gap-4 mb-4">
             <button 
               onClick={() => setActiveTab("ts")}
-              className={\`px-4 py-2 text-sm font-medium rounded-lg transition-colors \${activeTab === "ts" ? "bg-white/10 text-white" : "text-neutral-500 hover:text-white"}\`}
+              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${activeTab === "ts" ? "bg-white/10 text-white" : "text-neutral-500 hover:text-white"}`}
             >
               TypeScript
             </button>
             <button 
               onClick={() => setActiveTab("python")}
-              className={\`px-4 py-2 text-sm font-medium rounded-lg transition-colors \${activeTab === "python" ? "bg-white/10 text-white" : "text-neutral-500 hover:text-white"}\`}
+              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${activeTab === "python" ? "bg-white/10 text-white" : "text-neutral-500 hover:text-white"}`}
             >
               Python (LangChain)
             </button>
