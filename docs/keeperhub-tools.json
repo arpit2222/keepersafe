@@ -1,0 +1,1585 @@
+{
+  "result": {
+    "tools": [
+      {
+        "name": "list_workflows",
+        "description": "List all workflows for the authenticated organization. Optionally filter by projectId or tagId.",
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "projectId": {
+              "description": "Optional project ID to filter workflows",
+              "type": "string"
+            },
+            "tagId": {
+              "description": "Optional tag ID to filter workflows",
+              "type": "string"
+            }
+          }
+        },
+        "annotations": {
+          "title": "List Workflows",
+          "readOnlyHint": true,
+          "destructiveHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "get_workflow",
+        "description": "Get a single workflow by ID, including its nodes, edges, and configuration.",
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "workflowId": {
+              "type": "string",
+              "description": "The workflow ID"
+            }
+          },
+          "required": [
+            "workflowId"
+          ]
+        },
+        "annotations": {
+          "title": "Get Workflow",
+          "readOnlyHint": true,
+          "destructiveHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "create_workflow",
+        "description": "Create a new workflow with nodes and edges. Nodes define the trigger and actions; edges define the execution flow. Workflows are created disabled by default; pass enabled=true to make schedule/event/block/webhook triggers fire immediately.",
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "Workflow name"
+            },
+            "description": {
+              "description": "Optional workflow description",
+              "type": "string"
+            },
+            "nodes": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {}
+              },
+              "description": "Workflow nodes (trigger + action nodes)"
+            },
+            "edges": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {}
+              },
+              "description": "Workflow edges connecting nodes"
+            },
+            "enabled": {
+              "description": "Whether the workflow is active on creation. Defaults to false; non-manual triggers stay dormant until enabled.",
+              "type": "boolean"
+            },
+            "projectId": {
+              "description": "Optional project ID to assign the workflow to",
+              "type": "string"
+            },
+            "tagId": {
+              "description": "Optional tag ID to label the workflow",
+              "type": "string"
+            },
+            "idempotency_key": {
+              "description": "Optional Idempotency-Key (e.g. an agent-side transaction id). Retrying with the same key and arguments returns the original result instead of executing again, within a 24h window. Two 409s are possible, and the body's `retryable` field says only whether it is safe to send the request again under the SAME key. `idempotency_in_progress` (retryable true): the first request is still running, so retry shortly with the same key. `idempotency_conflict` (retryable false): this body is not the body the key was bound to. Rotate to a NEW key ONLY if this is genuinely different work. If it is the same intent you already sent, the body drifted rather than the intent - re-serializing `0.1` as `0.10`, or `network` for `chainId`, produces this - so rebuild the body to match the original and keep the key. Rotating there escapes the in-flight guard and can broadcast a second transaction. False does not mean give up. Keep the same key whenever the previous attempt's outcome is unknown, such as after a timeout, because rotating it then escapes the in-flight guard. The field appears on these two codes only; other statuses keep their usual meaning, so a 429 is still worth retrying after a back-off even though it carries no `retryable`.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "name",
+            "nodes",
+            "edges"
+          ]
+        },
+        "annotations": {
+          "title": "Create Workflow",
+          "readOnlyHint": false,
+          "destructiveHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "update_workflow",
+        "description": "Update an existing workflow's name, description, nodes, edges, project/tag assignment, or enabled state. Set enabled=false to stop scheduled/event/block/webhook triggers from firing without deleting the workflow.",
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "workflowId": {
+              "type": "string",
+              "description": "The workflow ID to update"
+            },
+            "name": {
+              "description": "New workflow name",
+              "type": "string"
+            },
+            "description": {
+              "description": "New workflow description",
+              "type": "string"
+            },
+            "nodes": {
+              "description": "Updated workflow nodes",
+              "type": "array",
+              "items": {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {}
+              }
+            },
+            "edges": {
+              "description": "Updated workflow edges",
+              "type": "array",
+              "items": {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {}
+              }
+            },
+            "enabled": {
+              "description": "Whether the workflow is active. Disabled workflows are skipped by schedule/event/block triggers and webhook calls return 410 Gone.",
+              "type": "boolean"
+            },
+            "projectId": {
+              "description": "Project ID to assign (null to unassign)",
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "tagId": {
+              "description": "Tag ID to assign (null to unassign)",
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "workflowId"
+          ]
+        },
+        "annotations": {
+          "title": "Update Workflow",
+          "readOnlyHint": false,
+          "destructiveHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "delete_workflow",
+        "description": "Delete a workflow by ID. This action is irreversible.",
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "workflowId": {
+              "type": "string",
+              "description": "The workflow ID to delete"
+            }
+          },
+          "required": [
+            "workflowId"
+          ]
+        },
+        "annotations": {
+          "title": "Delete Workflow",
+          "readOnlyHint": false,
+          "destructiveHint": true
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "list_projects",
+        "description": "List all projects for the authenticated organization, each with its workflow count. Use a project's id as projectId when creating, updating, or filtering workflows.",
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "annotations": {
+          "title": "List Projects",
+          "readOnlyHint": true,
+          "destructiveHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "create_project",
+        "description": "Create a project to group workflows. Returns the new project including its id, which you can pass as projectId to create_workflow or update_workflow to assign workflows to it.",
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "Project name"
+            },
+            "description": {
+              "description": "Optional project description",
+              "type": "string"
+            },
+            "color": {
+              "description": "Optional hex color (e.g. #4A90D9). Auto-assigned from the palette when omitted.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "name"
+          ]
+        },
+        "annotations": {
+          "title": "Create Project",
+          "readOnlyHint": false,
+          "destructiveHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "list_tags",
+        "description": "List all tags for the authenticated organization, each with its workflow count. Use a tag's id as tagId when creating, updating, or filtering workflows.",
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "annotations": {
+          "title": "List Tags",
+          "readOnlyHint": true,
+          "destructiveHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "create_tag",
+        "description": "Create a tag to label workflows. Returns the new tag including its id, which you can pass as tagId to create_workflow or update_workflow to label workflows.",
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "Tag name"
+            },
+            "color": {
+              "description": "Optional hex color (e.g. #4A90D9). Auto-assigned from the palette when omitted.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "name"
+          ]
+        },
+        "annotations": {
+          "title": "Create Tag",
+          "readOnlyHint": false,
+          "destructiveHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "execute_workflow",
+        "description": "Trigger a manual execution of a workflow. This ONLY confirms the trigger was accepted -- the workflow runs in the background and has NOT completed when this call returns. Returns { executionId, status: \"running\" }. A successful (non-error) tool call here is evidence of triggering, never of completion or of any on-chain effect. Call get_execution with the returned executionId afterward to learn the actual outcome -- only get_execution's status and per-transaction receipts are on-chain verified.",
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "workflowId": {
+              "type": "string",
+              "description": "The workflow ID to execute"
+            },
+            "input": {
+              "description": "Optional input data to pass to the workflow trigger",
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {}
+            },
+            "idempotency_key": {
+              "description": "Optional Idempotency-Key (e.g. an agent-side transaction id). Retrying with the same key and arguments returns the original result instead of executing again, within a 24h window. Two 409s are possible, and the body's `retryable` field says only whether it is safe to send the request again under the SAME key. `idempotency_in_progress` (retryable true): the first request is still running, so retry shortly with the same key. `idempotency_conflict` (retryable false): this body is not the body the key was bound to. Rotate to a NEW key ONLY if this is genuinely different work. If it is the same intent you already sent, the body drifted rather than the intent - re-serializing `0.1` as `0.10`, or `network` for `chainId`, produces this - so rebuild the body to match the original and keep the key. Rotating there escapes the in-flight guard and can broadcast a second transaction. False does not mean give up. Keep the same key whenever the previous attempt's outcome is unknown, such as after a timeout, because rotating it then escapes the in-flight guard. The field appears on these two codes only; other statuses keep their usual meaning, so a 429 is still worth retrying after a back-off even though it carries no `retryable`.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "workflowId"
+          ]
+        },
+        "annotations": {
+          "title": "Execute Workflow",
+          "readOnlyHint": false,
+          "destructiveHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "get_execution",
+        "description": "Get combined status and step-by-step logs for a workflow execution. Replaces the v1.11 get_execution_status + get_execution_logs pair. Returns { status, logs } in a single response. `status` and each log's `transactionHashes[].verified`/`receiptStatus` are independently reconciled against on-chain receipts before the execution is allowed to finalize as success -- this, not execute_workflow's trigger acknowledgement, is the authoritative signal for whether a workflow (and any money movement within it) actually completed. By default returns full node input/output data (backward compatible with v1.11 get_execution_logs no-param callers). Pass `includeData: false` to omit input/output/outputRaw blobs, `nodeIds: string[]` to restrict full data to specific nodes (status and error always returned for every node), or `truncateData: number` (bytes) to cap individual input/output/outputRaw payloads. The `error` field is never truncated. One exception to the shape: for an execution owned by another organization that you can see only through its workflow's public share setting, `logs` is null and `status` is redacted (node identifiers omitted) -- includeData, nodeIds and truncateData have no effect there.",
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "executionId": {
+              "type": "string",
+              "description": "The execution ID returned by execute_workflow"
+            },
+            "includeData": {
+              "description": "Include input/output/outputRaw blobs on each log entry. Defaults to true for backward compatibility with v1.11 get_execution_logs callers. Pass false to receive a compact status-only response.",
+              "type": "boolean"
+            },
+            "nodeIds": {
+              "description": "Restrict full input/output/outputRaw data to only the listed nodeIds (exact, case-sensitive match against the nodeId column). All other entries still return status, error, nodeName, nodeType, startedAt, completedAt, duration, timestamp, iterationIndex, and forEachNodeId. Empty array is treated as omitted. Has no effect when includeData is false.",
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "truncateData": {
+              "description": "Per-field byte cap. Any input/output/outputRaw JSON-stringified payload exceeding this size is replaced with { _truncated: true, originalSize: <bytes>, preview: <first N bytes of stringified value> }. The error field is NEVER truncated regardless of this cap.",
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "maximum": 9007199254740991
+            }
+          },
+          "required": [
+            "executionId"
+          ]
+        },
+        "annotations": {
+          "title": "Get Execution",
+          "readOnlyHint": true,
+          "destructiveHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "get_execution_status",
+        "description": "[DEPRECATED — will be removed in v1.13. Use get_execution instead.] Get workflow execution status only (status sub-object). Prefer get_execution for combined status and logs.",
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "executionId": {
+              "type": "string",
+              "description": "The execution ID returned by execute_workflow"
+            }
+          },
+          "required": [
+            "executionId"
+          ]
+        },
+        "annotations": {
+          "title": "Get Execution Status (deprecated)",
+          "readOnlyHint": true,
+          "destructiveHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "get_execution_logs",
+        "description": "[DEPRECATED — will be removed in v1.13. Use get_execution instead.] Get workflow execution step logs only (logs sub-object). Prefer get_execution for combined status and logs.",
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "executionId": {
+              "type": "string",
+              "description": "The execution ID returned by execute_workflow"
+            },
+            "includeData": {
+              "description": "Include input/output/outputRaw blobs on each log entry. Defaults to true for backward compatibility with v1.11 get_execution_logs callers. Pass false to receive a compact status-only response.",
+              "type": "boolean"
+            },
+            "nodeIds": {
+              "description": "Restrict full input/output/outputRaw data to only the listed nodeIds (exact, case-sensitive match against the nodeId column). All other entries still return status, error, nodeName, nodeType, startedAt, completedAt, duration, timestamp, iterationIndex, and forEachNodeId. Empty array is treated as omitted. Has no effect when includeData is false.",
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "truncateData": {
+              "description": "Per-field byte cap. Any input/output/outputRaw JSON-stringified payload exceeding this size is replaced with { _truncated: true, originalSize: <bytes>, preview: <first N bytes of stringified value> }. The error field is NEVER truncated regardless of this cap.",
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "maximum": 9007199254740991
+            }
+          },
+          "required": [
+            "executionId"
+          ]
+        },
+        "annotations": {
+          "title": "Get Execution Logs (deprecated)",
+          "readOnlyHint": true,
+          "destructiveHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "ai_generate_workflow",
+        "description": "Generate a complete workflow from a natural language description using AI. Returns a workflow definition ready to be created.",
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "prompt": {
+              "type": "string",
+              "description": "Natural language description of the workflow to generate, e.g. 'Monitor USDC transfers over $10k and send a Discord alert'"
+            },
+            "context": {
+              "description": "Additional context or constraints for the AI generator",
+              "type": "string"
+            }
+          },
+          "required": [
+            "prompt"
+          ]
+        },
+        "annotations": {
+          "title": "AI Generate Workflow",
+          "readOnlyHint": true,
+          "destructiveHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "list_action_schemas",
+        "description": "List all available action schemas, triggers, and supported chains. Use this to discover what actions and integrations are available for workflow creation. Each chain includes a 'status' field (stable, experimental, or deprecated) - prefer stable chains for production writes and avoid experimental/deprecated ones unless the user explicitly opts in.",
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "category": {
+              "description": "Filter by category (e.g., 'web3', 'discord', 'system', 'triggers')",
+              "type": "string"
+            },
+            "includeChains": {
+              "description": "Whether to include supported blockchain networks (default: true)",
+              "type": "boolean"
+            }
+          }
+        },
+        "annotations": {
+          "title": "List Action Schemas",
+          "readOnlyHint": true,
+          "destructiveHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "search_plugins",
+        "description": "[DEPRECATED — will be removed in v1.13. Use list_action_schemas instead.] List available action schemas filtered by category (e.g., 'web3', 'discord', 'system').",
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "category": {
+              "type": "string",
+              "description": "Category to filter by (e.g., 'web3', 'discord', 'sendgrid', 'system', 'triggers')"
+            }
+          },
+          "required": [
+            "category"
+          ]
+        },
+        "annotations": {
+          "title": "Search Plugins",
+          "readOnlyHint": true,
+          "destructiveHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "get_plugin",
+        "description": "Get schema details for a specific plugin or integration type.",
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "pluginType": {
+              "type": "string",
+              "description": "Plugin type identifier (e.g., 'web3', 'discord', 'sendgrid')"
+            }
+          },
+          "required": [
+            "pluginType"
+          ]
+        },
+        "annotations": {
+          "title": "Get Plugin",
+          "readOnlyHint": true,
+          "destructiveHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "list_integrations",
+        "description": "List all configured integrations (credentials) for the organization. These are required for actions like Discord notifications or Sendgrid emails.",
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "annotations": {
+          "title": "List Integrations",
+          "readOnlyHint": true,
+          "destructiveHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "get_wallet_integration",
+        "description": "Get details for a specific wallet integration. Required for web3 write actions like fund transfers and contract writes.",
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "integrationId": {
+              "type": "string",
+              "description": "The integration (wallet) ID"
+            }
+          },
+          "required": [
+            "integrationId"
+          ]
+        },
+        "annotations": {
+          "title": "Get Wallet Integration",
+          "readOnlyHint": true,
+          "destructiveHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "search_templates",
+        "description": "Search for pre-built workflow templates that can be deployed and customized.",
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "query": {
+              "description": "Search query to find relevant templates",
+              "type": "string"
+            },
+            "category": {
+              "description": "Filter templates by category",
+              "type": "string"
+            }
+          }
+        },
+        "annotations": {
+          "title": "Search Templates",
+          "readOnlyHint": true,
+          "destructiveHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "get_template",
+        "description": "[DEPRECATED — will be removed in v1.13. Use get_workflow instead.] Get details of a specific workflow template by ID.",
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "templateId": {
+              "type": "string",
+              "description": "The template workflow ID"
+            }
+          },
+          "required": [
+            "templateId"
+          ]
+        },
+        "annotations": {
+          "title": "Get Template",
+          "readOnlyHint": true,
+          "destructiveHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "deploy_template",
+        "description": "Clone a public template workflow into the organization as a new workflow.",
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "templateId": {
+              "type": "string",
+              "description": "The template workflow ID to clone"
+            },
+            "name": {
+              "description": "Optional name for the cloned workflow",
+              "type": "string"
+            }
+          },
+          "required": [
+            "templateId"
+          ]
+        },
+        "annotations": {
+          "title": "Deploy Template",
+          "readOnlyHint": false,
+          "destructiveHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "tools_documentation",
+        "description": "Get documentation on how to use the KeeperHub MCP tools, including workflow creation and safe direct execution.",
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "annotations": {
+          "title": "Tools Documentation",
+          "readOnlyHint": true,
+          "destructiveHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "execute_transfer",
+        "description": "Transfer native tokens (ETH, MATIC) or ERC20 tokens from your wallet to a recipient address. Requires a wallet integration.",
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "chain_id": {
+              "description": "Chain ID (e.g., '1' for Ethereum, '8453' for Base, or '103' for Solana Devnet). Solana transfers can broadcast, but simulate is currently EVM-only.",
+              "type": "string"
+            },
+            "to_address": {
+              "type": "string",
+              "description": "Recipient wallet address (EVM 0x or Solana base58)"
+            },
+            "amount": {
+              "description": "Amount to transfer in human-readable units (e.g., '0.1')",
+              "type": "string"
+            },
+            "token_address": {
+              "description": "ERC20 token contract address. Omit for native token transfers.",
+              "type": "string"
+            },
+            "simulate": {
+              "description": "Set to true to simulate an EVM operation without signing or broadcasting. Solana networks (chain IDs 101/103 and their aliases) are not yet supported. Use the same arguments with simulate omitted or false only after a successful simulation.",
+              "type": "boolean"
+            },
+            "idempotency_key": {
+              "description": "Optional Idempotency-Key (e.g. an agent-side transaction id). Retrying with the same key and arguments returns the original result instead of executing again, within a 24h window. Two 409s are possible, and the body's `retryable` field says only whether it is safe to send the request again under the SAME key. `idempotency_in_progress` (retryable true): the first request is still running, so retry shortly with the same key. `idempotency_conflict` (retryable false): this body is not the body the key was bound to. Rotate to a NEW key ONLY if this is genuinely different work. If it is the same intent you already sent, the body drifted rather than the intent - re-serializing `0.1` as `0.10`, or `network` for `chainId`, produces this - so rebuild the body to match the original and keep the key. Rotating there escapes the in-flight guard and can broadcast a second transaction. False does not mean give up. Keep the same key whenever the previous attempt's outcome is unknown, such as after a timeout, because rotating it then escapes the in-flight guard. The field appears on these two codes only; other statuses keep their usual meaning, so a 429 is still worth retrying after a back-off even though it carries no `retryable`.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "chain_id",
+            "to_address",
+            "amount"
+          ]
+        },
+        "annotations": {
+          "title": "Transfer Funds",
+          "readOnlyHint": false,
+          "destructiveHint": true
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "execute_contract_call",
+        "description": "Call a smart contract function. For view/pure functions, returns the result directly. For state-changing functions, submits a transaction and returns the execution ID. Requires a wallet integration for write calls. Full example: {\"contract_address\": \"0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238\", \"chain_id\": \"11155111\", \"function_name\": \"transfer\", \"function_args\": \"[\\\"0xRecipient...\\\", \\\"1000\\\"]\"} - note that function_args is a JSON array encoded as a string.",
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "contract_address": {
+              "type": "string",
+              "description": "Contract address (0x...)"
+            },
+            "chain_id": {
+              "description": "Chain ID (e.g., '1' for Ethereum)",
+              "type": "string"
+            },
+            "function_name": {
+              "type": "string",
+              "description": "Solidity function name (e.g., 'balanceOf', 'transfer')"
+            },
+            "function_args": {
+              "description": "JSON array of function arguments (e.g., '[\"0x...\", \"1000\"]')",
+              "type": "string"
+            },
+            "abi": {
+              "description": "Contract ABI as JSON string. Auto-fetched for verified contracts if omitted.",
+              "type": "string"
+            },
+            "value": {
+              "description": "Native value to send with the call, as a decimal string in ether units (e.g. '0.1'). For payable functions.",
+              "type": "string"
+            },
+            "gas_limit_multiplier": {
+              "description": "Gas limit multiplier (e.g., '1.5' for 50% buffer)",
+              "type": "string"
+            },
+            "priority_fee_gwei": {
+              "description": "Explicit maxPriorityFeePerGas in gwei (e.g., '2'). Bypasses the chain's default min/max priority-fee clamp. Use when the network's mempool requires a tip above the configured floor.",
+              "type": "string"
+            },
+            "simulate": {
+              "description": "Set to true to simulate an EVM operation without signing or broadcasting. Solana networks (chain IDs 101/103 and their aliases) are not yet supported. Use the same arguments with simulate omitted or false only after a successful simulation.",
+              "type": "boolean"
+            },
+            "idempotency_key": {
+              "description": "Optional Idempotency-Key (e.g. an agent-side transaction id). Retrying with the same key and arguments returns the original result instead of executing again, within a 24h window. Two 409s are possible, and the body's `retryable` field says only whether it is safe to send the request again under the SAME key. `idempotency_in_progress` (retryable true): the first request is still running, so retry shortly with the same key. `idempotency_conflict` (retryable false): this body is not the body the key was bound to. Rotate to a NEW key ONLY if this is genuinely different work. If it is the same intent you already sent, the body drifted rather than the intent - re-serializing `0.1` as `0.10`, or `network` for `chainId`, produces this - so rebuild the body to match the original and keep the key. Rotating there escapes the in-flight guard and can broadcast a second transaction. False does not mean give up. Keep the same key whenever the previous attempt's outcome is unknown, such as after a timeout, because rotating it then escapes the in-flight guard. The field appears on these two codes only; other statuses keep their usual meaning, so a 429 is still worth retrying after a back-off even though it carries no `retryable`.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "contract_address",
+            "chain_id",
+            "function_name"
+          ]
+        },
+        "annotations": {
+          "title": "Contract Call",
+          "readOnlyHint": false,
+          "destructiveHint": true
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "execute_check_and_execute",
+        "description": "Read a contract value, evaluate a condition, and execute an action if the condition is met. Useful for conditional on-chain operations (e.g., 'if balance > 1000, then transfer'). Requires a wallet integration. Full example: {\"contract_address\": \"0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238\", \"chain_id\": \"11155111\", \"function_name\": \"balanceOf\", \"function_args\": \"[\\\"0xHolder...\\\"]\", \"condition\": {\"operator\": \"gt\", \"value\": \"1000\"}, \"action\": {\"contract_address\": \"0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238\", \"function_name\": \"transfer\", \"function_args\": \"[\\\"0xRecipient...\\\", \\\"1000\\\"]\"}} - note that function_args is a JSON array encoded as a string, on both the check and the action.",
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "contract_address": {
+              "type": "string",
+              "description": "Contract address to read the check value from (0x...)"
+            },
+            "chain_id": {
+              "description": "Chain ID (e.g., '1' for Ethereum)",
+              "type": "string"
+            },
+            "function_name": {
+              "type": "string",
+              "description": "Function to call for the check (e.g., 'balanceOf')"
+            },
+            "function_args": {
+              "description": "JSON array of function arguments for the check",
+              "type": "string"
+            },
+            "abi": {
+              "description": "ABI for the check contract (auto-fetched if omitted)",
+              "type": "string"
+            },
+            "condition": {
+              "type": "object",
+              "properties": {
+                "operator": {
+                  "type": "string",
+                  "enum": [
+                    "eq",
+                    "neq",
+                    "gt",
+                    "lt",
+                    "gte",
+                    "lte"
+                  ],
+                  "description": "Comparison operator"
+                },
+                "value": {
+                  "description": "Target value to compare against",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "operator",
+                "value"
+              ]
+            },
+            "action": {
+              "type": "object",
+              "properties": {
+                "contract_address": {
+                  "type": "string",
+                  "description": "Contract to call if condition met (0x...)"
+                },
+                "function_name": {
+                  "type": "string",
+                  "description": "Function to execute if condition met"
+                },
+                "function_args": {
+                  "description": "JSON array of function arguments for the action",
+                  "type": "string"
+                },
+                "abi": {
+                  "description": "ABI for the action contract",
+                  "type": "string"
+                },
+                "gas_limit_multiplier": {
+                  "description": "Gas limit multiplier for the action",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "contract_address",
+                "function_name"
+              ]
+            },
+            "simulate": {
+              "description": "Set to true to simulate an EVM operation without signing or broadcasting. Solana networks (chain IDs 101/103 and their aliases) are not yet supported. Use the same arguments with simulate omitted or false only after a successful simulation.",
+              "type": "boolean"
+            },
+            "idempotency_key": {
+              "description": "Optional Idempotency-Key (e.g. an agent-side transaction id). Retrying with the same key and arguments returns the original result instead of executing again, within a 24h window. Two 409s are possible, and the body's `retryable` field says only whether it is safe to send the request again under the SAME key. `idempotency_in_progress` (retryable true): the first request is still running, so retry shortly with the same key. `idempotency_conflict` (retryable false): this body is not the body the key was bound to. Rotate to a NEW key ONLY if this is genuinely different work. If it is the same intent you already sent, the body drifted rather than the intent - re-serializing `0.1` as `0.10`, or `network` for `chainId`, produces this - so rebuild the body to match the original and keep the key. Rotating there escapes the in-flight guard and can broadcast a second transaction. False does not mean give up. Keep the same key whenever the previous attempt's outcome is unknown, such as after a timeout, because rotating it then escapes the in-flight guard. The field appears on these two codes only; other statuses keep their usual meaning, so a 429 is still worth retrying after a back-off even though it carries no `retryable`.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "contract_address",
+            "chain_id",
+            "function_name",
+            "condition",
+            "action"
+          ]
+        },
+        "annotations": {
+          "title": "Check and Execute",
+          "readOnlyHint": false,
+          "destructiveHint": true
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "get_direct_execution_status",
+        "description": "Get the status of a direct execution (transfer or contract call). Returns transaction hash, status, and result when complete. Status is one of pending, running, unconfirmed, completed, failed; only completed and failed are terminal. unconfirmed means the transaction is on chain but not yet confirmed, so keep polling rather than re-sending.",
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "execution_id": {
+              "type": "string",
+              "description": "The execution ID returned by execute_transfer, execute_contract_call, or execute_check_and_execute"
+            }
+          },
+          "required": [
+            "execution_id"
+          ]
+        },
+        "annotations": {
+          "title": "Get Direct Execution Status",
+          "readOnlyHint": true,
+          "destructiveHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "validate_cron",
+        "description": "Validate a cron expression or interval schedule before creating a schedule trigger. Returns { valid, error?, description? }.",
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "cronExpression": {
+              "type": "string",
+              "description": "Cron expression with 5 or 6 fields (e.g. '0 9 * * *')"
+            },
+            "scheduleIntervalSeconds": {
+              "description": "Optional interval trigger seconds (minimum 60). Validated separately from cronExpression.",
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "maximum": 9007199254740991
+            }
+          },
+          "required": [
+            "cronExpression"
+          ]
+        },
+        "annotations": {
+          "title": "Validate Cron",
+          "readOnlyHint": true,
+          "destructiveHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "list_executions",
+        "description": "List workflow and direct executions for the organization with cursor pagination. Wraps GET /api/analytics/runs.",
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "cursor": {
+              "description": "Pagination cursor from prior page",
+              "type": "string"
+            },
+            "limit": {
+              "description": "Page size (default 20, max 100)",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            },
+            "status": {
+              "description": "Filter by status: pending, running, success, error, system_error, external_error, cancelled",
+              "type": "string"
+            },
+            "source": {
+              "description": "Filter by execution source",
+              "type": "string",
+              "enum": [
+                "workflow",
+                "direct"
+              ]
+            },
+            "range": {
+              "description": "Time range preset (e.g. 24h, 7d, 30d)",
+              "type": "string"
+            }
+          }
+        },
+        "annotations": {
+          "title": "List Executions",
+          "readOnlyHint": true,
+          "destructiveHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "get_spending_limits",
+        "description": "Get the organization's daily direct-execution spending caps and current usage (EVM wei and Solana lamports).",
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "annotations": {
+          "title": "Get Spending Limits",
+          "readOnlyHint": true,
+          "destructiveHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "test_notification",
+        "description": "Test an integration connection (e.g. Discord, Slack, SendGrid) without saving credentials. May send a real test message depending on the integration type.",
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "description": "Integration plugin type (e.g. 'discord', 'slack', 'sendgrid')"
+            },
+            "config": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {
+                "type": "string"
+              },
+              "description": "Credential fields to test (same shape as integration config)"
+            }
+          },
+          "required": [
+            "type",
+            "config"
+          ]
+        },
+        "annotations": {
+          "title": "Test Notification",
+          "readOnlyHint": false,
+          "destructiveHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "tempo_sign_and_hold",
+        "description": "Sign a Tempo transfer-with-memo transaction and hold it for later broadcast (Sign and Hold). Org owner only. Returns paymentId for tempo_release_hold or tempo_cancel_hold.",
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "network": {
+              "type": "string",
+              "description": "Tempo network name or chain ID"
+            },
+            "tokenConfig": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "object",
+                  "propertyNames": {
+                    "type": "string"
+                  },
+                  "additionalProperties": {}
+                }
+              ],
+              "description": "Token symbol or address config"
+            },
+            "amount": {
+              "type": "string",
+              "description": "Human-readable token amount"
+            },
+            "recipientAddress": {
+              "type": "string",
+              "description": "Recipient address"
+            },
+            "memo": {
+              "description": "Optional memo (max 32 bytes)",
+              "type": "string"
+            },
+            "broadcastMode": {
+              "description": "manual (default) or schedule",
+              "type": "string",
+              "enum": [
+                "manual",
+                "schedule"
+              ]
+            },
+            "broadcastAt": {
+              "description": "ISO timestamp when broadcastMode is schedule",
+              "type": "string"
+            },
+            "validBefore": {
+              "description": "Optional on-chain expiry override",
+              "type": "string"
+            },
+            "idempotency_key": {
+              "description": "Optional Idempotency-Key (e.g. an agent-side transaction id). Retrying with the same key and arguments returns the original result instead of executing again, within a 24h window. Two 409s are possible, and the body's `retryable` field says only whether it is safe to send the request again under the SAME key. `idempotency_in_progress` (retryable true): the first request is still running, so retry shortly with the same key. `idempotency_conflict` (retryable false): this body is not the body the key was bound to. Rotate to a NEW key ONLY if this is genuinely different work. If it is the same intent you already sent, the body drifted rather than the intent - re-serializing `0.1` as `0.10`, or `network` for `chainId`, produces this - so rebuild the body to match the original and keep the key. Rotating there escapes the in-flight guard and can broadcast a second transaction. False does not mean give up. Keep the same key whenever the previous attempt's outcome is unknown, such as after a timeout, because rotating it then escapes the in-flight guard. The field appears on these two codes only; other statuses keep their usual meaning, so a 429 is still worth retrying after a back-off even though it carries no `retryable`.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "network",
+            "tokenConfig",
+            "amount",
+            "recipientAddress"
+          ]
+        },
+        "annotations": {
+          "title": "Tempo Sign and Hold",
+          "readOnlyHint": false,
+          "destructiveHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "tempo_cancel_hold",
+        "description": "Cancel a pending Tempo held payment so it is never broadcast. Org owner only.",
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "paymentId": {
+              "type": "string",
+              "description": "Held payment ID from tempo_sign_and_hold"
+            }
+          },
+          "required": [
+            "paymentId"
+          ]
+        },
+        "annotations": {
+          "title": "Tempo Cancel Hold",
+          "readOnlyHint": false,
+          "destructiveHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "tempo_release_hold",
+        "description": "Release (broadcast) a held Tempo payment now. Org owner only. Interactive browser sessions still require step-up MFA; OAuth and API-key callers may release without MFA.",
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "paymentId": {
+              "type": "string",
+              "description": "Held payment ID from tempo_sign_and_hold"
+            },
+            "idempotency_key": {
+              "description": "Optional Idempotency-Key (e.g. an agent-side transaction id). Retrying with the same key and arguments returns the original result instead of executing again, within a 24h window. Two 409s are possible, and the body's `retryable` field says only whether it is safe to send the request again under the SAME key. `idempotency_in_progress` (retryable true): the first request is still running, so retry shortly with the same key. `idempotency_conflict` (retryable false): this body is not the body the key was bound to. Rotate to a NEW key ONLY if this is genuinely different work. If it is the same intent you already sent, the body drifted rather than the intent - re-serializing `0.1` as `0.10`, or `network` for `chainId`, produces this - so rebuild the body to match the original and keep the key. Rotating there escapes the in-flight guard and can broadcast a second transaction. False does not mean give up. Keep the same key whenever the previous attempt's outcome is unknown, such as after a timeout, because rotating it then escapes the in-flight guard. The field appears on these two codes only; other statuses keep their usual meaning, so a 429 is still worth retrying after a back-off even though it carries no `retryable`.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "paymentId"
+          ]
+        },
+        "annotations": {
+          "title": "Tempo Release Hold",
+          "readOnlyHint": false,
+          "destructiveHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "search_protocol_actions",
+        "description": "Search for available protocol actions across all supported DeFi protocols (Aave, Morpho, Chronicle, Chainlink, Uniswap, Compound, Lido, etc.). Call this first to discover what actions are available and what parameters they require, then use execute_protocol_action to run them.",
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "query": {
+              "description": "Keyword search across action names, descriptions, and action types. Every word must match, so fewer words match more actions (e.g., 'ETH balance', 'borrow', 'swap'). Omit to list every action.",
+              "type": "string"
+            },
+            "protocol": {
+              "description": "Filter by protocol name (e.g., 'chronicle', 'aave-v3', 'morpho', 'uniswap', 'compound', 'lido', 'chainlink')",
+              "type": "string"
+            }
+          }
+        },
+        "annotations": {
+          "title": "Search Protocol Actions",
+          "readOnlyHint": true,
+          "destructiveHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "execute_protocol_action",
+        "description": "Execute a DeFi protocol action directly. Use search_protocol_actions first to discover available actions and their required parameters. The actionType follows the format 'protocol/action-slug' (e.g., 'chronicle/eth-usd-read', 'aave-v3/supply', 'morpho/get-position'). Pass all required parameters in the params object.",
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "actionType": {
+              "type": "string",
+              "description": "The action identifier in 'protocol/action-slug' format (e.g., 'chronicle/eth-usd-read', 'aave-v3/get-user-account-data')"
+            },
+            "params": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {},
+              "description": "Action parameters as key-value pairs (e.g., {network: '1', address: '0x...'}). Use search_protocol_actions to discover required params."
+            }
+          },
+          "required": [
+            "actionType",
+            "params"
+          ]
+        },
+        "annotations": {
+          "title": "Execute Protocol Action",
+          "readOnlyHint": false,
+          "destructiveHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "search_workflows",
+        "description": "Search KeeperHub listed workflows callable by external agents. Returns slug, description, inputSchema, and price for each match. Use sort='popular' to rank by usage, sort='recent' to see new listings first; omit sort for the default ordering. Use call_workflow to invoke a result.",
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "query": {
+              "description": "Natural-language search query",
+              "type": "string"
+            },
+            "category": {
+              "description": "Category filter (e.g., 'defi', 'monitoring')",
+              "type": "string"
+            },
+            "chain": {
+              "description": "Chain ID filter (e.g., '8453' for Base, '1' for Ethereum)",
+              "type": "string"
+            },
+            "sort": {
+              "description": "Sort order: 'popular' (most-called workflows first) or 'recent' (most-recently listed first). Omit for the default catalog ordering.",
+              "type": "string",
+              "enum": [
+                "popular",
+                "recent"
+              ]
+            },
+            "workflowType": {
+              "description": "Filter by workflow type. 'read' executes and returns the result; 'write' returns unsigned calldata for the caller to submit.",
+              "type": "string",
+              "enum": [
+                "read",
+                "write"
+              ]
+            }
+          }
+        },
+        "annotations": {
+          "title": "Search Workflows",
+          "readOnlyHint": true,
+          "destructiveHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "call_workflow",
+        "description": "Invoke a listed KeeperHub workflow. For read workflows, executes and returns the result. For write workflows, returns unsigned calldata {to, data, value} for the caller to submit. Use search_workflows first to discover available workflows. PAID WORKFLOWS: this tool DOES NOT auto-pay. A paid listing returns HTTP 402 with an x402 challenge — pay it with @keeperhub/wallet's paymentSigner.fetch(), agentcash's mcp__agentcash__fetch, or the marketplace UI, then retry. The 402 error message includes the price and concrete next-step paths.",
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "slug": {
+              "type": "string",
+              "description": "The workflow's listed slug (listedSlug from search results)"
+            },
+            "inputs": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {},
+              "description": "Input fields as declared in the workflow's inputSchema"
+            }
+          },
+          "required": [
+            "slug",
+            "inputs"
+          ]
+        },
+        "annotations": {
+          "title": "Call Workflow",
+          "readOnlyHint": false,
+          "destructiveHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "list_workflow",
+        "description": "Publish a workflow to the KeeperHub marketplace catalog. Sets isListed=true, assigns or preserves listedSlug, refreshes listedAt. Other agents discover the listing via search_workflows and invoke it via call_workflow. Use this after creating a workflow with create_workflow. Idempotent: re-publishing preserves the original slug.",
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "workflowId": {
+              "type": "string",
+              "description": "The internal ID of the workflow to publish"
+            },
+            "slug": {
+              "description": "Public URL slug for the listing (e.g. 'my-defi-alert'). Required on first publish; preserved on re-publish.",
+              "type": "string"
+            },
+            "category": {
+              "description": "Workflow category (e.g. 'defi', 'monitoring')",
+              "type": "string"
+            },
+            "chain": {
+              "description": "Chain ID this workflow targets (e.g. '8453' for Base)",
+              "type": "string"
+            },
+            "inputSchema": {
+              "description": "JSON Schema for the workflow's input parameters",
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {}
+            },
+            "outputMapping": {
+              "description": "Mapping of workflow output fields to return values",
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {}
+            },
+            "workflowType": {
+              "description": "Workflow type: 'read' for read-only, 'write' for state-changing",
+              "type": "string",
+              "enum": [
+                "read",
+                "write"
+              ]
+            }
+          },
+          "required": [
+            "workflowId"
+          ]
+        },
+        "annotations": {
+          "title": "List Workflow",
+          "readOnlyHint": false,
+          "destructiveHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "unlist_workflow",
+        "description": "Remove a workflow from the marketplace catalog. Slug is preserved for re-listing. Use when the workflow is deprecated or temporarily unavailable. Does not delete the workflow itself; use delete_workflow for permanent removal.",
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "workflowId": {
+              "type": "string",
+              "description": "The internal ID of the workflow to unlist"
+            }
+          },
+          "required": [
+            "workflowId"
+          ]
+        },
+        "annotations": {
+          "title": "Unlist Workflow",
+          "readOnlyHint": false,
+          "destructiveHint": true
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "update_workflow_listing",
+        "description": "Edit listing metadata for a workflow (description, tags, category, chain, schemas). Cannot change pricing while listed — unlist first, update price, then re-list.",
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "workflowId": {
+              "type": "string",
+              "description": "The internal ID of the workflow to update"
+            },
+            "category": {
+              "description": "Updated category (e.g. 'defi', 'monitoring')",
+              "type": "string"
+            },
+            "chain": {
+              "description": "Updated chain ID (e.g. '8453' for Base)",
+              "type": "string"
+            },
+            "inputSchema": {
+              "description": "Updated JSON Schema for input parameters (full replace)",
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {}
+            },
+            "outputMapping": {
+              "description": "Updated output field mapping (full replace)",
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {}
+            },
+            "workflowType": {
+              "description": "Updated workflow type",
+              "type": "string",
+              "enum": [
+                "read",
+                "write"
+              ]
+            },
+            "priceUsdcPerCall": {
+              "description": "Updated price in USDC (only allowed while unlisted)",
+              "type": "string"
+            }
+          },
+          "required": [
+            "workflowId"
+          ]
+        },
+        "annotations": {
+          "title": "Update Workflow Listing",
+          "readOnlyHint": false,
+          "destructiveHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "validate_workflow",
+        "description": "Validate a workflow's structural and Web3-specific correctness before calling create_workflow or executing it. Fast tier (default): structural checks (empty nodes, edge references, trigger config, bare-@ literals), listing-eligibility checks (inputSchema present for listed workflows, outputMapping references real nodes), write-action consistency, plus Web3 cheap checks (chain ID in chains table, contract address format via ethers.isAddress). Zero network calls; <300ms p95. Deep tier (deepCheck=true): in addition, runs best-effort ABI bytecode match via resolveAbi against every contract reference. Mismatches on abi-with-auto-fetch fields are emitted as WARNINGS, never errors, so proxy contracts (Aave V3, Uniswap V3, WETH) never produce false positives. Capped at 3s aggregate + 2s per-call + 5 concurrent RPC calls. Return shape: { ok: true, result: { valid: boolean, nodeCount: number, errors?: Array<{ code, message, parameterPath }>, warnings?: Array<{ code, message, parameterPath }> } }. The errors and warnings keys are OMITTED when empty (not present as []). Error codes are kebab-case stable identifiers; parameterPath is a dot-path like 'nodes[2].config.contractAddress'.",
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "workflowId": {
+              "type": "string",
+              "description": "The workflow ID to validate. Must belong to the caller's org."
+            },
+            "deepCheck": {
+              "description": "When true, also runs best-effort ABI bytecode matching via resolveAbi. Adds up to 3 seconds of latency. Mismatches emit warnings only (never errors). Default false.",
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "workflowId"
+          ]
+        },
+        "annotations": {
+          "title": "Validate Workflow",
+          "readOnlyHint": true,
+          "destructiveHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "prepare_test_pin_data",
+        "description": "Return the JSON Schema each node in a workflow expects as pin data, so an agent can construct valid test inputs. Read-only introspection: does NOT execute any plugin step, does NOT write to the database, makes zero network calls beyond the workflow row fetch. Return shape: { ok: true, result: { nodes: Array<{ nodeId, nodeName, type, pinSchema: JSONSchema, required: boolean }> } }. Each node's pinSchema is a JSON Schema with type:object describing the fields its plugin action expects. `required` on each node is true when the action declares one or more required configFields. Use this to learn what pin data to supply before invoking the future test_workflow execution tool (on the roadmap — see specs/mcp-test-workflow.md).",
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "workflowId": {
+              "type": "string",
+              "description": "The workflow ID to introspect. Must belong to the caller's org."
+            }
+          },
+          "required": [
+            "workflowId"
+          ]
+        },
+        "annotations": {
+          "title": "Prepare Test Pin Data",
+          "readOnlyHint": true,
+          "destructiveHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      },
+      {
+        "name": "get_workflow_listing",
+        "description": "Read full listing metadata for a workflow by its public slug. Public access; no auth required.",
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "slug": {
+              "type": "string",
+              "description": "The workflow's public listing slug (e.g. 'my-defi-alert')"
+            }
+          },
+          "required": [
+            "slug"
+          ]
+        },
+        "annotations": {
+          "title": "Get Workflow Listing",
+          "readOnlyHint": true,
+          "destructiveHint": false
+        },
+        "execution": {
+          "taskSupport": "forbidden"
+        }
+      }
+    ]
+  },
+  "jsonrpc": "2.0",
+  "id": 2
+}
