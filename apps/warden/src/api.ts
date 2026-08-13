@@ -45,8 +45,8 @@ async function getTrailingAverageUsd(): Promise<number> {
   if (recentLogs.length === 0) return 100; // Mock base $100 if no history
   
   const sum = recentLogs.reduce((acc, log) => {
-    const wei = BigInt(log.action.amount || "0");
-    const usd = (Number(wei) / 1e18) * 3000;
+    const eth = parseFloat(log.action.amount || "0");
+    const usd = eth * 3000;
     return acc + usd;
   }, 0);
   return sum / recentLogs.length;
