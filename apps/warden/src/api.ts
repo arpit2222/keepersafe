@@ -63,7 +63,24 @@ app.post('/api/warden/request', async (req, res) => {
     const idempotencyKey = crypto.randomUUID();
     
     // 1. Simulate
-    const simEffect = await keeperHub.simulateTransfer(action.to_address, action.amount, action.token_address);
+    let simEffect;
+    try {
+      simEffect = await keeperHub.simulateTransfer(action.to_address, action.amount, action.token_address);
+    } catch (simError: any) {
+      // Log as rejected if simulation fails (e.g. insufficient funds)
+      const log = new (AuditLog as any)({
+        idempotencyKey,
+        action,
+        requestedBy,
+        statedIntent,
+        simulatedEffect: { error: simError.message },
+        decision: "REJECT",
+        reason: "Simulation failed (e.g. insufficient balance)",
+        status: "REJECTED"
+      });
+      await log.save();
+      return res.json({ success: true, decision: "REJECT", status: "REJECTED", reason: "Simulation failed", log });
+    }
     const spendingLimits = await keeperHub.getSpendingLimits();
     const trailingAverageUsd = await getTrailingAverageUsd();
 
